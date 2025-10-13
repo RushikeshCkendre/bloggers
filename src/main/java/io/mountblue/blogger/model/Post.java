@@ -3,6 +3,9 @@ package io.mountblue.blogger.model;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -10,8 +13,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+@EntityListeners(AuditingEntityListener.class)
 @Entity
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "posts")
@@ -34,49 +39,29 @@ public class Post {
     private LocalDateTime publishedAt;
 
     @Column(name = "is_published")
-    private boolean isPublished;
+    private boolean published;
 
-    @Column(name = "created_at")
+    @CreatedDate
+    @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
+    @LastModifiedDate
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "author_id")
-    private User author;
+    @Column
+    private String author;
 
-    @OneToMany(mappedBy = "post", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Comment> comments = new ArrayList<>();
 
-    @ManyToMany(fetch = FetchType.LAZY,
-            cascade = {CascadeType.PERSIST, CascadeType.MERGE,
-                    CascadeType.DETACH, CascadeType.REFRESH})
-    @JoinTable(name = "post_tags",
+    @ManyToMany()
+    @JoinTable(
+            name = "post_tags",
             joinColumns = @JoinColumn(name = "post_id"),
-            inverseJoinColumns = @JoinColumn(name = "tag_id"))
+            inverseJoinColumns = @JoinColumn(name = "tag_id")
+    )
     private Set<Tag> tags = new HashSet<>();
-
-    public void addTag(Tag tag) {
-        if (tags == null) {
-            tags = new HashSet<>();
-        }
-        tags.add(tag);
-    }
-
-    public void addComment(Comment comment) {
-        comments.add(comment);
-    }
-
-    public void removeComment(Comment comment) {
-        comments.remove(comment);
-    }
-
-    public List<String> getTagNames() {
-        List<String> tagNames = new ArrayList<>();
-        for (Tag tag : tags) {
-            tagNames.add(tag.getName());
-        }
-        return tagNames;
-    }
+    @Transient
+    private String tagAssister;
 }
