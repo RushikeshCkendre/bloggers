@@ -91,8 +91,14 @@ public class PostService {
 
     public Page<Post> getPostsBySearchAndOrTagsAndOrAuthors(
             Pageable pageable, String keyword, List<String> tags, List<String> authors) {
+        if (tags != null && tags.isEmpty()) {
+            tags = null;
+        }
+        if (authors != null && authors.isEmpty()) {
+            authors = null;
+        }
 
-        return postRepository.getPostsBySearchAndOrTagsAndOrAuthors(pageable, keyword, tags, authors);
+            return postRepository.getPostsBySearchAndOrTagsAndOrAuthors(pageable, keyword, tags, authors);
     }
 
 

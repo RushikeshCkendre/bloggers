@@ -127,11 +127,12 @@ public class PostController {
 
     @GetMapping("/filter")
     public String filterPostsBySearchAndOrTagsAndOrAuthors(Model model,
-                                                           @RequestParam String keyword,
-                                                           @RequestParam(defaultValue = "") List<String> tags,
-                                                           @RequestParam(defaultValue = "") List<String> authors,
+                                                           @RequestParam (required = false, defaultValue = "")String keyword,
+                                                           @RequestParam(required = false, defaultValue = "") List<String> tags,
+                                                           @RequestParam(required = false,defaultValue = "") List<String> authors,
                                                            @RequestParam(defaultValue = "0") int page,
                                                            @RequestParam(defaultValue = "10") int size) {
+
 
         Pageable pageable = PageRequest.of(page, size);
         Page<Post> posts = postService.getPostsBySearchAndOrTagsAndOrAuthors(pageable, keyword, tags, authors);

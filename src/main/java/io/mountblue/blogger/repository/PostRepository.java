@@ -32,12 +32,13 @@ public interface PostRepository extends JpaRepository<Post, Long> {
 
 
     @Query("SELECT DISTINCT p FROM Post p LEFT JOIN p.tags t " +
-            "WHERE (:keyword IS NULL OR " +
+            "WHERE (" +
             "LOWER(p.title) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
             "LOWER(p.content) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
-            "LOWER(t.name) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
-            "OR (:tags IS NULL OR t.name IN :tags) " +
-            "OR (:authors IS NULL OR p.author IN :authors)")
+            "LOWER(t.name) LIKE LOWER(CONCAT('%', :keyword, '%'))" +
+            ") " +
+            "AND (:tags IS NULL OR t.name IN :tags) " +
+            "AND (:authors IS NULL OR p.author IN :authors)")
     Page<Post> getPostsBySearchAndOrTagsAndOrAuthors(
             Pageable pageable,
             @RequestParam String keyword,

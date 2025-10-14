@@ -66,20 +66,29 @@
 
 <div>
     <ul class="pagination" style="list-style: none; display: flex; gap: 0.5em; padding: 0;">
-        <li th:classappend="${allposts.hasPrevious()} ? '' : 'disabled'" style="padding: 0 10px; border: 1px solid #ccc; cursor: pointer;">
-            <a th:if="${allposts.hasPrevious()}" th:href="@{|/posts?page=${allposts.number - 1}&keyword=${keyword}|}" aria-label="Previous">Prev</a>
-            <span th:unless="${allposts.hasPrevious()}" style="color: gray; cursor: default;">Previous page</span>
+        <!-- Previous Button -->
+        <li th:classappend="${allposts.hasPrevious()} ? '' : 'disabled'"
+            style="padding: 0 10px; border: 1px solid #ccc; cursor: pointer;">
+            <a th:if="${allposts.hasPrevious()}"
+               th:href="@{/posts/filter(page=${allposts.number - 1}, keyword=${keyword}, tags=${selectedTags}, authors=${selectedAuthors})}"
+               aria-label="Previous">Prev</a>
+            <span th:unless="${allposts.hasPrevious()}" style="color: gray; cursor: default;">Previous</span>
         </li>
 
-
+        <!-- Page Numbers -->
         <li th:each="pageNum : ${#numbers.sequence(0, allposts.totalPages - 1)}"
             th:classappend="${pageNum == allposts.number} ? 'active'"
             style="padding: 0 10px; border: 1px solid #ccc; cursor: pointer;">
-            <a th:href="@{|/posts?page=${pageNum}&keyword=${keyword}|}" th:text="${pageNum + 1}">1</a>
+            <a th:href="@{/posts/filter(page=${pageNum}, keyword=${keyword}, tags=${selectedTags}, authors=${selectedAuthors})}"
+               th:text="${pageNum + 1}">1</a>
         </li>
 
-        <li th:classappend="${allposts.hasNext()} ? '' : 'disabled'" style="padding: 0 10px; border: 1px solid #ccc; cursor: pointer;">
-            <a th:if="${allposts.hasNext()}" th:href="@{|/posts?page=${allposts.number + 1}&keyword=${keyword}|}" aria-label="Next">Next</a>
+        <!-- Next Button -->
+        <li th:classappend="${allposts.hasNext()} ? '' : 'disabled'"
+            style="padding: 0 10px; border: 1px solid #ccc; cursor: pointer;">
+            <a th:if="${allposts.hasNext()}"
+               th:href="@{/posts/filter(page=${allposts.number + 1}, keyword=${keyword}, tags=${selectedTags}, authors=${selectedAuthors})}"
+               aria-label="Next">Next</a>
             <span th:unless="${allposts.hasNext()}" style="color: gray; cursor: default;">Next</span>
         </li>
     </ul>
