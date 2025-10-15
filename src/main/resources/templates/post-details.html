@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <title th:text="${post.title}">Post Title</title>
     <meta charset="UTF-8"/>
@@ -7,19 +8,19 @@
 <body style="display: flex; justify-content: center; font-family: sans-serif;">
 <div style="width: 60%; text-align: left;">
 
+    <!-- post view -->
     <div th:if="${!editPost}" style="border: 1px solid #ccc; padding: 15px; margin-bottom: 20px;">
         <h1 th:text="${post.title}">Post Title</h1>
-
         <p><i>By <b><span th:text="${post.author}">Author Name</span></b></i></p>
 
-        <div class="published-time" th:if="${post.publishedAt != null}"
+        <div th:if="${post.publishedAt != null}"
              th:text="'Published on: ' + ${#temporals.format(post.publishedAt, 'dd MMM yyyy HH:mm')}">
         </div>
 
         <p><strong>Content:</strong></p>
-        <p th:text="${post.content}">Post content goes here...</p>
+        <p th:text="${post.content}"></p>
 
-        <div th:if="${!editPost} and ${post.tags != null and !post.tags.isEmpty()}">
+        <div th:if="${post.tags != null and !post.tags.isEmpty()}">
             <h3>Tags:</h3>
             <span th:each="tag : ${post.tags}" style="margin-right: 5px;">
                 <span th:text="'#' + ${tag.name}"></span>
@@ -27,12 +28,19 @@
         </div>
         <br/><br/>
 
-        <button th:onclick="'location.href=\'/posts/update/' + ${post.id} + '\';'">Edit Post</button>
+        <!-- conditional only post owner or admin can see these buttons -->
+        <div th:if="${isPostAuthorOrAdmin}">
+            <button th:onclick="'location.href=\'/posts/update/' + ${post.id} + '\';'">Edit Post</button>
+            <form th:action="@{'/posts/delete/' + ${post.id}}" method="post"
+                  onsubmit="return confirm('Delete this post?');">
+                <button type="submit">Delete</button>
+            </form>
+        </div>
     </div>
 
+    <!-- edit post -->
     <div th:if="${editPost}">
         <form th:action="@{'/posts/update/' + ${post.id}}" th:object="${post}" method="post">
-
             <label>Title:</label><br/>
             <input type="text" th:field="*{title}" required style="width: 100%;"/><br/><br/>
 
@@ -40,7 +48,7 @@
             <input type="text"
                    name="tagAssister"
                    th:value="${#strings.arrayJoin(post.tags.![name], ', ')}"
-                   placeholder="e.g. java, springboot, backend"
+                   placeholder="e.g. java, springboot"
                    style="width: 100%;"/><br/><br/>
 
             <label>Content:</label><br/>
@@ -51,6 +59,7 @@
         </form>
     </div>
 
+    <!-- comment section -->
     <div style="border: 1px solid #ccc; padding: 15px; margin-bottom: 20px;">
         <h3>Comments:</h3>
 
@@ -59,23 +68,27 @@
         </div>
 
         <div th:each="comment : ${post.comments}" style="border: 1px solid #ccc; padding: 15px; margin-bottom: 20px;">
-            <!-- Display mode for comment -->
             <div th:if="${editCommentId == null or editCommentId != comment.id}">
                 <p>
-                    <strong th:text="${comment.name}">Commenter Name</strong>
-                    (<span th:text="${comment.email}">email@example.com</span>)
+                    <strong th:text="${comment.name}"></strong>
+                    (<span th:text="${comment.email}"></span>)
                 </p>
-                <p th:text="${comment.comment}">Comment text goes here...</p>
+                <p th:text="${comment.comment}"></p>
                 <p>
-                    <small th:text="${#temporals.format(comment.createdAt, 'dd MMM yyyy HH:mm')}">
-                        Comment date
-                    </small>
-                    <button th:onclick="'location.href=\'/comments/update/' + ${comment.id} + '\';'">Edit Comment</button>
-                </p>
+                    <small th:text="${#temporals.format(comment.createdAt, 'dd MMM yyyy HH:mm')}"></small>
 
-                <form th:action="@{'/comments/delete/' + ${comment.id}}" method="post" style="display:inline;">
-                    <button type="submit" onclick="return confirm('Are you sure you want to delete this comment?');">Delete</button>
-                </form>
+                    <!-- conditional only post owner or admin can see these buttons -->
+                    <span th:if="${isPostAuthorOrAdmin}">
+                        <button th:onclick="'location.href=\'/comments/update/' + ${comment.id} + '\';'">Edit Comment</button>
+
+                        <form th:if="${isPostAuthorOrAdmin}" th:action="@{'/comments/delete/' + ${comment.id}}" method="post" style="display:inline;">
+                            <button type="submit"
+                                    onclick="return confirm('Are you sure you want to delete this comment?');">
+                                Delete
+                            </button>
+                        </form>
+                    </span>
+                </p>
                 <hr/>
             </div>
 
@@ -97,11 +110,10 @@
         </div>
     </div>
 
+    <!-- comment form -->
     <div>
         <h3>Leave a Comment:</h3>
-
         <form th:action="@{'/comments/add/' + ${post.id}}" th:object="${userComment}" method="post">
-
             <label for="name">Name:</label><br/>
             <input type="text" id="name" th:field="*{name}" required style="width: 100%;"/><br/><br/>
 

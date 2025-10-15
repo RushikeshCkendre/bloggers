@@ -1,7 +1,7 @@
 package io.mountblue.blogger.service;
 
 import io.mountblue.blogger.model.User;
-import io.mountblue.blogger.model.UserDetailsImpl;
+import io.mountblue.blogger.model.UserPrincipal;
 import io.mountblue.blogger.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -24,7 +24,7 @@ public class UserDetailService implements UserDetailsService {
         }
 
 
-        return new UserDetailsImpl(user);
+        return new UserPrincipal(user);
 
 
     }

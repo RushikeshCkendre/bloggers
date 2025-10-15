@@ -6,9 +6,7 @@ import io.mountblue.blogger.model.Post;
 import io.mountblue.blogger.repository.PostRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.ui.Model;
 
@@ -83,14 +81,7 @@ public class PostService {
         postRepository.deleteById(id);
     }
 
-    public Page<Post> getPostsByKeyword(Pageable pageable, String keyword,
-                                        String keyword1, String keyword2, String keyword3) {
-    return  postRepository
-            .findDistinctByAuthorContainingOrTitleContainingOrContentContainingOrTags_NameContaining(
-                    pageable,keyword,keyword,keyword,keyword);
-    }
-
-    public Page<Post> getPostsBySearchAndOrTagsAndOrAuthors(
+    public Page<Post> getPostsByFilters(
             Pageable pageable, String keyword, List<String> tags, List<String> authors, LocalDateTime from, LocalDateTime to) {
          if (tags != null && tags.isEmpty()) {
             tags = null;

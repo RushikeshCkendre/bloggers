@@ -28,10 +28,6 @@ public interface PostRepository extends JpaRepository<Post, Long> {
 
     List<Post> findAll();
 
-    Page<Post> findDistinctByAuthorContainingOrTitleContainingOrContentContainingOrTags_NameContaining(
-            Pageable pageable ,String keyword, String keyword1, String keyword2, String keyword3);
-
-
     @Query("SELECT DISTINCT p FROM Post p LEFT JOIN p.tags t " +
             "WHERE (" +
             "LOWER(p.title) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
@@ -49,6 +45,5 @@ public interface PostRepository extends JpaRepository<Post, Long> {
             @Param("authors") List<String> authors,
             @Param("from") LocalDateTime from,
             @Param("to") LocalDateTime to);
-
 
 }

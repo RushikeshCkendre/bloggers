@@ -9,8 +9,8 @@
 <div style="text-align: center;">
     <h2>Login</h2>
     <form action="/authenticateTheUser" method="POST">
-        <label for="email">Email</label>
-        <input type="email" id="email" name="email" placeholder="Enter your email" required
+        <label for="username">username</label>
+        <input type="text" id="username" name="username" placeholder="Enter your username" required
                style="display: block; width: 200px; margin: 10px auto; padding: 5px;">
 
         <label for="password">Password</label>
@@ -20,6 +20,8 @@
         <input type="submit" value="Login"
                style="display: block; width: 200px; margin: 10px auto; padding: 5px; cursor: pointer;">
     </form>
+
+    <p>Don't have an account? <a href="/register">Create one here</a></p>
 </div>
 
 </body>

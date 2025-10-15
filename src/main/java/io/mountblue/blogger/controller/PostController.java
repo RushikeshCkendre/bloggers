@@ -1,10 +1,13 @@
 package io.mountblue.blogger.controller;
 
 import io.mountblue.blogger.dto.PostDTO;
+import io.mountblue.blogger.enums.Role;
 import io.mountblue.blogger.mapper.PostMapper;
 import io.mountblue.blogger.model.Comment;
 import io.mountblue.blogger.model.Post;
 import io.mountblue.blogger.model.Tag;
+import io.mountblue.blogger.model.User;
+import io.mountblue.blogger.repository.UserRepository;
 import io.mountblue.blogger.service.PostService;
 import io.mountblue.blogger.service.TagService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,11 +16,12 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
@@ -32,6 +36,9 @@ public class PostController {
 
     @Autowired
     private PostMapper postMapper;
+
+    @Autowired
+    private UserRepository userRepository;
 
     @Autowired
     private TagService tagService;
@@ -55,15 +62,27 @@ public class PostController {
     }
 
     @GetMapping("/{id}")
-    public String getPost(@PathVariable Long id, Model model) {
+    public String getPost(@PathVariable Long id, Model model, Authentication authentication) {
         Post post = postService.getPostById(id);
-
         PostDTO postDTO = postMapper.toDto(post);
 
         model.addAttribute("userComment", new Comment());
         model.addAttribute("editPost", false);
         model.addAttribute("post", postDTO);
         model.addAttribute("comment", new Comment());
+
+        boolean isPostAuthor = false;
+        boolean isAdmin = false;
+
+        if (authentication != null && authentication.isAuthenticated()) {
+            String username = authentication.getName();
+            isPostAuthor = post.getAuthor().equals(username);
+            isAdmin = authentication.getAuthorities().stream()
+                    .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+        }
+
+        model.addAttribute("isPostAuthorOrAdmin", isPostAuthor || isAdmin);
+
 
         return "post-details";
     }
@@ -76,39 +95,42 @@ public class PostController {
         return "new-post";
     }
 
-    @GetMapping("/search")
-    public String getPostsByKeyword(Model model,
-                                    @RequestParam String keyword,
-                                    @RequestParam(defaultValue = "0") int page,
-                                    @RequestParam(defaultValue = "10") int size) {
-        Pageable pageable = PageRequest.of(page, size);
-        Page<Post> posts = postService.getPostsByKeyword(pageable, keyword, keyword, keyword, keyword);
-
-        Page<PostDTO> postDTOPage = posts.map(post -> postMapper.toDto(post));
-
-        List<Tag> tagList = tagService.getAllTags();
-
-        Set<String> authorList = postService.getAllPosts().stream().map(Post::getAuthor).collect(Collectors.toSet());
-
-        model.addAttribute("alltags", tagList);
-        model.addAttribute("allauthors", authorList);
-        model.addAttribute("allposts", postDTOPage);
-        model.addAttribute("keyword", keyword);
-        return "posts";
-    }
-
     @PostMapping("/save")
-    public String savePost(@ModelAttribute Post post) {
-        postService.savePost(post);
+    public String savePost(@ModelAttribute Post post, Authentication authentication) {
+        String username = authentication.getName();
+        boolean isAuthor = authentication.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_AUTHOR"));
+        boolean isAdmin = authentication.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+        if (isAuthor) {
+            post.setAuthor(username);
+            post.setUser(userRepository.getByUsername(username));
+        }
+
+
+        if (isAdmin) {
+            String givenAuthorName = post.getAuthor(); // from form
+            if (givenAuthorName != null && !givenAuthorName.isBlank()) {
+                User authorUser = userRepository.getByUsername(givenAuthorName);
+
+                if (authorUser != null && authorUser.getRole().name().equals("AUTHOR")) {
+                    post.setUser(authorUser);
+                } else {
+                    post.setUser(null);
+                }
+            }
+        }
+
+            postService.savePost(post);
 
         return "redirect:/posts";
     }
 
     @GetMapping("/update/{id}")
-    public String showEditPostForm(@PathVariable Long id, Model model) {
+    public String showEditPostForm(@PathVariable Long id, Model model, Authentication authentication) {
+
         Post post = postService.getPostById(id);
         PostDTO postDTO = postMapper.toDto(post);
-        System.out.println(postDTO);
 
         model.addAttribute("post", postDTO);
         model.addAttribute("editPost", true);
@@ -117,36 +139,59 @@ public class PostController {
         return "post-details";
     }
 
-
+    // boolean isAdmin = authentication.getAuthorities().stream().anyMatch(a-> a.getAuthority().equals("ROLE_ADMIN"));
     @PostMapping("/update/{id}")
-    public String updatePost(@ModelAttribute Post post) {
-        Post updatedPost = postService.updatePost(post);
-        return "redirect:/posts/" + updatedPost.getId();
+    public String updatePost(@PathVariable Long id, @ModelAttribute Post post, Authentication authentication) {
+        Post existingPost = postService.getPostById(id);
+        String username = authentication.getName();
+
+        boolean isAuthor = authentication.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_AUTHOR"));
+
+        if (isAuthor && !existingPost.getAuthor().equals(username)) {
+            throw new AccessDeniedException("You can only edit your own posts.");
+        }
+
+        post.setId(existingPost.getId());
+        post.setAuthor(existingPost.getAuthor());
+
+        postService.updatePost(post);
+
+        return "redirect:/posts/" + existingPost.getId();
     }
 
     @PostMapping("/delete/{id}")
-    public String deletePost(@PathVariable Long id) {
+    public String deletePost(@PathVariable Long id, Authentication authentication) {
+        Post existingPost = postService.getPostById(id);
+        String username = authentication.getName();
+
+        boolean isAuthor = authentication.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_AUTHOR"));
+
+        if (isAuthor && !existingPost.getAuthor().equals(username)) {
+            throw new AccessDeniedException("You can only edit your own posts.");
+        }
         postService.deletePostById(id);
-        return "posts";
+        return "redirect:/posts";
     }
 
     @GetMapping("/filter")
-    public String filterPostsBySearchAndOrTagsAndOrAuthors(Model model,
-                                                           @RequestParam (required = false, defaultValue = "")String keyword,
-                                                           @RequestParam(required = false, defaultValue = "") List<String> tags,
-                                                           @RequestParam(required = false,defaultValue = "") List<String> authors,
-                                                           @RequestParam(required = false,defaultValue ="")@DateTimeFormat LocalDateTime from,
-                                                           @RequestParam(required = false,defaultValue = "")@DateTimeFormat LocalDateTime to,
-                                                           @RequestParam(defaultValue = "desc") String sortDirection,
-                                                           @RequestParam(defaultValue = "createdAt") String sortBy,
-                                                           @RequestParam(defaultValue = "0") int page,
-                                                           @RequestParam(defaultValue = "10") int size) {
+    public String filterPosts(Model model,
+                              @RequestParam(required = false, defaultValue = "") String keyword,
+                              @RequestParam(required = false, defaultValue = "") List<String> tags,
+                              @RequestParam(required = false, defaultValue = "") List<String> authors,
+                              @RequestParam(required = false, defaultValue = "") @DateTimeFormat LocalDateTime from,
+                              @RequestParam(required = false, defaultValue = "") @DateTimeFormat LocalDateTime to,
+                              @RequestParam(defaultValue = "desc") String sortDirection,
+                              @RequestParam(defaultValue = "createdAt") String sortBy,
+                              @RequestParam(defaultValue = "0") int page,
+                              @RequestParam(defaultValue = "10") int size) {
+        Sort.Direction direction = sortDirection
+                .equalsIgnoreCase("asc") ? Sort.Direction.ASC : Sort.Direction.DESC;
 
-
-        Sort.Direction direction = sortDirection.equalsIgnoreCase("asc") ? Sort.Direction.ASC : Sort.Direction.DESC;
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
 
-        Page<Post> posts = postService.getPostsBySearchAndOrTagsAndOrAuthors(pageable, keyword, tags, authors, from, to);
+        Page<Post> posts = postService.getPostsByFilters(pageable, keyword, tags, authors, from, to);
 
 
         List<Tag> tagList = tagService.getAllTags();
