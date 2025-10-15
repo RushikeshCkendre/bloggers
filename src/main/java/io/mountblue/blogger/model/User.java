@@ -19,6 +19,9 @@ public class User {
     @Column(name = "id")
     private Long id;
 
+    @Column(nullable = false,unique = true)
+    private String username;
+
     private String name;
     private String email;
     private String password;
@@ -26,5 +29,6 @@ public class User {
     @Enumerated(EnumType.STRING)
     private Role role;
 
-
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Post> posts;
 }

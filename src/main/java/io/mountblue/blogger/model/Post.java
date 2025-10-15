@@ -64,4 +64,8 @@ public class Post {
     private Set<Tag> tags = new HashSet<>();
     @Transient
     private String tagAssister;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    private User user;
 }
