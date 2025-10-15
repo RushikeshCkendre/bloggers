@@ -2,75 +2,118 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>All Posts</title>
+    <title>Posts</title>
+</head>
+<body style="text-align: center; font-family: sans-serif;">
 
-    <form th:action="@{/posts/filter}" method="get" style="margin-bottom: 1em;">
-        <input type="text" name="keyword" placeholder="Search posts..." th:value="${keyword}" />
+<h1>Blog App</h1>
 
-            <button type="submit">Search</button>
+<form th:action="@{/posts/filter}" method="get" style="margin-bottom: 2em; display: inline-block; text-align: left;">
+    <div style="text-align: center;">
+        <input type="text" name="keyword" placeholder="Search posts..." th:value="${keyword}"
+               style="padding: 0.5em; width: 300px;"/>
+        <button type="submit" style="padding: 0.5em 1em;">Search</button>
+    </div>
 
+    <p style="text-align: center;"><a th:href="@{/posts}">clear search</a></p>
 
-        <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem;">
-            <strong>Tags:</strong>
-            <div th:each="tag : ${alltags}" style="display: flex; align-items: center;">
-                <label style="display: flex; align-items: center; gap: 4px;">
-                    <input type="checkbox" name="tags" th:value="${tag.name}" />
-                    <span th:text="${tag.name}">Tag</span>
-                </label>
-            </div>
-        </div>
-        <br/><br/>
-
-        <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem;">
-        <strong>Authors:</strong>
+    <!-- Authors Checkboxes -->
+    <br/>
+    <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 0.75rem;">
+        <strong style="width: 100%;">Authors:</strong>
         <div th:each="author : ${allauthors}" style="display: flex; align-items: center;">
             <label style="display: flex; align-items: center; gap: 4px;">
-                <input type="checkbox" name="authors" th:value="${author}" />
+                <input type="checkbox" name="authors" th:value="${author}"
+                       th:checked="${selectedAuthors != null && selectedAuthors.contains(author)}"/>
                 <span th:text="${author}">Author</span>
             </label>
         </div>
     </div>
-        <br/><br/>
 
-
-
-    </form>
+    <!-- Tags Checkboxes -->
     <br/><br/>
-</head>
-<body>
-<a th:href="@{/posts/new}" class="btn btn-primary" style="margin-bottom: 1em; display: inline-block;">
+    <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 0.75rem;">
+        <strong style="width: 100%;">Tags:</strong>
+        <div th:each="tag : ${alltags}" style="display: flex; align-items: center;">
+            <label style="display: flex; align-items: center; gap: 4px;">
+                <input type="checkbox" name="tags" th:value="${tag.name}"
+                       th:checked="${selectedTags != null && selectedTags.contains(tag.name)}"/>
+                <span th:text="${tag.name}">Tag</span>
+            </label>
+        </div>
+    </div>
+
+    <!-- Date range -->
+    <br/><br/>
+    <div style="text-align: center;">
+        <input type="datetime-local" name="from" style="margin-right: 1em;">
+        <input type="datetime-local" name="to">
+    </div>
+
+    <!-- Sorting options -->
+    <br/><br/>
+    <div style="text-align: center;">
+        <label for="sortBy"><strong>Sort by:</strong></label>
+        <select name="sortBy" id="sortBy" style="margin-right: 1em;">
+            <option value="createdAt" th:selected="${sortBy == 'createdAt'}">Created At</option>
+            <option value="title" th:selected="${sortBy == 'title'}">Title</option>
+            <option value="author" th:selected="${sortBy == 'author'}">Author</option>
+        </select>
+
+        <label for="sortDirection"><strong>Direction:</strong></label>
+        <select name="sortDirection" id="sortDirection">
+            <option value="asc" th:selected="${sortDirection == 'asc'}">Ascending</option>
+            <option value="desc" th:selected="${sortDirection == 'desc'}">Descending</option>
+        </select>
+    </div>
+
+    <br/><br/>
+</form>
+
+<br/><br/>
+
+<a th:href="@{/posts/new}" class="btn btn-primary"
+   style="margin-bottom: 1em; display: inline-block; padding: 0.5em 1em; border: 1px solid black;">
     Create New Post
 </a>
-<h1>All Blog Posts</h1>
 
 <div th:if="${#lists.isEmpty(allposts)}">
     <p>No posts found.</p>
 </div>
 
-<div th:each="post : ${allposts}">
-    <div style="border: 1px solid #ccc; padding: 10px; margin: 10px;">
-        <a th:href="@{'/posts/' + ${post.id}}">
-            <h2 th:text="${post.title}"></h2>
-        </a>
-        <p th:text="${post.excerpt}"></p>
+<div th:each="post : ${allposts}" style="border: 1px solid #ccc; padding: 10px; margin: 10px auto; max-width: 700px; text-align: left;">
+    <a th:href="@{'/posts/' + ${post.id}}">
+        <h2 th:text="${post.title}" style="margin: 0 0 0.5em;"></h2>
+    </a>
+    <p><i>By <b><span th:text="${post.author}">Author Name</span></b></i></p>
+    <p th:if="${post.publishedAt != null}"
+       th:text="'Published on: ' + ${#temporals.format(post.publishedAt, 'dd MMM yyyy HH:mm')}"></p>
+    <p th:text="${post.excerpt}"></p>
 
-        <div th:if="${post.tags != null}">
-            <strong>Tags:</strong>
-            <span th:each="tag : ${post.tags}" style="margin-right: 5px;">
-                <span th:text="'#' + ${tag.name}"></span>
-            </span>
-        </div>
+    <div th:if="${post.tags != null}">
+        <strong>Tags:</strong>
+        <span th:each="tag : ${post.tags}" style="margin-right: 5px;">
+            <span th:text="'#' + ${tag.name}"></span>
+        </span>
     </div>
 </div>
 
-
-<div>
-    <ul class="pagination" style="list-style: none; display: flex; gap: 0.5em; padding: 0;">
+<!-- Pagination -->
+<div style="text-align: center;">
+    <ul class="pagination" style="list-style: none; display: inline-flex; gap: 0.5em; padding: 0;">
         <!-- Previous Button -->
         <li th:classappend="${allposts.hasPrevious()} ? '' : 'disabled'"
             style="padding: 0 10px; border: 1px solid #ccc; cursor: pointer;">
             <a th:if="${allposts.hasPrevious()}"
-               th:href="@{/posts/filter(page=${allposts.number - 1}, keyword=${keyword}, tags=${selectedTags}, authors=${selectedAuthors})}"
+               th:href="@{/posts/filter(
+                   page=${allposts.number - 1},
+                   keyword=${keyword},
+                   tags=${selectedTags},
+                   authors=${selectedAuthors},
+                   from=${from},
+                   to=${to},
+                   sortBy=${sortBy},
+                   sortDirection=${sortDirection})}"
                aria-label="Previous">Prev</a>
             <span th:unless="${allposts.hasPrevious()}" style="color: gray; cursor: default;">Previous</span>
         </li>
@@ -79,7 +122,15 @@
         <li th:each="pageNum : ${#numbers.sequence(0, allposts.totalPages - 1)}"
             th:classappend="${pageNum == allposts.number} ? 'active'"
             style="padding: 0 10px; border: 1px solid #ccc; cursor: pointer;">
-            <a th:href="@{/posts/filter(page=${pageNum}, keyword=${keyword}, tags=${selectedTags}, authors=${selectedAuthors})}"
+            <a th:href="@{/posts/filter(
+                   page=${pageNum},
+                   keyword=${keyword},
+                   tags=${selectedTags},
+                   authors=${selectedAuthors},
+                   from=${from},
+                   to=${to},
+                   sortBy=${sortBy},
+                   sortDirection=${sortDirection})}"
                th:text="${pageNum + 1}">1</a>
         </li>
 
@@ -87,7 +138,15 @@
         <li th:classappend="${allposts.hasNext()} ? '' : 'disabled'"
             style="padding: 0 10px; border: 1px solid #ccc; cursor: pointer;">
             <a th:if="${allposts.hasNext()}"
-               th:href="@{/posts/filter(page=${allposts.number + 1}, keyword=${keyword}, tags=${selectedTags}, authors=${selectedAuthors})}"
+               th:href="@{/posts/filter(
+                   page=${allposts.number + 1},
+                   keyword=${keyword},
+                   tags=${selectedTags},
+                   authors=${selectedAuthors},
+                   from=${from},
+                   to=${to},
+                   sortBy=${sortBy},
+                   sortDirection=${sortDirection})}"
                aria-label="Next">Next</a>
             <span th:unless="${allposts.hasNext()}" style="color: gray; cursor: default;">Next</span>
         </li>

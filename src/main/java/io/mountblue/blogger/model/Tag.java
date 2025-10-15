@@ -41,5 +41,6 @@ public class Tag {
 
 
     public Tag(String newTag) {
+        this.name = newTag;
     }
 }

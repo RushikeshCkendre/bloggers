@@ -11,11 +11,17 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 
 @Controller
@@ -40,8 +46,7 @@ public class PostController {
 
         List<Tag> tagList = tagService.getAllTags();
 
-        List<String> authorList = postService.getAllPosts().stream().map(Post::getAuthor).toList();
-
+        Set<String> authorList = postService.getAllPosts().stream().map(Post::getAuthor).collect(Collectors.toSet());
         model.addAttribute("alltags", tagList);
         model.addAttribute("allauthors", authorList);
         model.addAttribute("allposts", postsDTOPage);
@@ -83,7 +88,7 @@ public class PostController {
 
         List<Tag> tagList = tagService.getAllTags();
 
-        List<String> authorList = postService.getAllPosts().stream().map(Post::getAuthor).toList();
+        Set<String> authorList = postService.getAllPosts().stream().map(Post::getAuthor).collect(Collectors.toSet());
 
         model.addAttribute("alltags", tagList);
         model.addAttribute("allauthors", authorList);
@@ -130,25 +135,36 @@ public class PostController {
                                                            @RequestParam (required = false, defaultValue = "")String keyword,
                                                            @RequestParam(required = false, defaultValue = "") List<String> tags,
                                                            @RequestParam(required = false,defaultValue = "") List<String> authors,
+                                                           @RequestParam(required = false,defaultValue ="")@DateTimeFormat LocalDateTime from,
+                                                           @RequestParam(required = false,defaultValue = "")@DateTimeFormat LocalDateTime to,
+                                                           @RequestParam(defaultValue = "desc") String sortDirection,
+                                                           @RequestParam(defaultValue = "createdAt") String sortBy,
                                                            @RequestParam(defaultValue = "0") int page,
                                                            @RequestParam(defaultValue = "10") int size) {
 
 
-        Pageable pageable = PageRequest.of(page, size);
-        Page<Post> posts = postService.getPostsBySearchAndOrTagsAndOrAuthors(pageable, keyword, tags, authors);
+        Sort.Direction direction = sortDirection.equalsIgnoreCase("asc") ? Sort.Direction.ASC : Sort.Direction.DESC;
+        Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
+
+        Page<Post> posts = postService.getPostsBySearchAndOrTagsAndOrAuthors(pageable, keyword, tags, authors, from, to);
 
 
         List<Tag> tagList = tagService.getAllTags();
 
-        List<String> authorList = postService.getAllPosts().stream().map(Post::getAuthor).toList();
+        Set<String> authorList = postService.getAllPosts().stream().map(Post::getAuthor).collect(Collectors.toSet());
 
         Page<PostDTO> postDTOPage = posts.map(post -> postMapper.toDto(post));
-
 
         model.addAttribute("alltags", tagList);
         model.addAttribute("allauthors", authorList);
         model.addAttribute("allposts", postDTOPage);
         model.addAttribute("keyword", keyword);
+        model.addAttribute("from", from);
+        model.addAttribute("to", to);
+        model.addAttribute("selectedAuthors", authors);
+        model.addAttribute("selectedTags", tags);
+        model.addAttribute("sortBy", sortBy);
+        model.addAttribute("sorting", sortDirection);
         return "posts";
     }
 

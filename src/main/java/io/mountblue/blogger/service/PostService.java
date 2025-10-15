@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.ui.Model;
 
@@ -90,15 +91,15 @@ public class PostService {
     }
 
     public Page<Post> getPostsBySearchAndOrTagsAndOrAuthors(
-            Pageable pageable, String keyword, List<String> tags, List<String> authors) {
-        if (tags != null && tags.isEmpty()) {
+            Pageable pageable, String keyword, List<String> tags, List<String> authors, LocalDateTime from, LocalDateTime to) {
+         if (tags != null && tags.isEmpty()) {
             tags = null;
         }
         if (authors != null && authors.isEmpty()) {
             authors = null;
         }
 
-            return postRepository.getPostsBySearchAndOrTagsAndOrAuthors(pageable, keyword, tags, authors);
+            return postRepository.getPostsBySearchAndOrTagsAndOrAuthors(pageable, keyword, tags, authors, from, to);
     }
 
 

@@ -2,29 +2,36 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>new post</title>
+    <title>New Post</title>
 </head>
-<body>
+<body style="text-align: center; font-family: sans-serif;">
+
 <h2>Create a New Post</h2>
 
-<form th:action="@{/posts/save}" method="post" th:object="${post}">
+<form th:action="@{/posts/save}" method="post" th:object="${post}"
+      style="display: inline-block; text-align: left; padding: 20px; border: 1px solid #ccc; border-radius: 8px;">
 
     <label>Title:</label><br>
-    <input type="text" th:field="*{title}" placeholder="Enter post title" required/><br><br>
+    <input type="text" th:field="*{title}" placeholder="Enter post title" required style="width: 300px;"/><br><br>
 
     <label>Content:</label><br>
-    <textarea th:field="*{content}" placeholder="Write your full blog here..." required></textarea><br><br>
+    <textarea th:field="*{content}" placeholder="Write your full blog here..." required
+              style="width: 300px; height: 150px;"></textarea><br><br>
 
-    <label>author:</label><br>
-    <input th:field="*{author}" type="text" name="author" placeholder="author name" /><br><br>
+    <label>Author:</label><br>
+    <input th:field="*{author}" type="text" name="author" placeholder="Author name" style="width: 300px;"/><br><br>
 
-    <label>dummy tags:</label><br>
-    <input th:field="*{tagAssister}" type="text" name="tag" placeholder="e.g. java, springboot, backend" /><br><br>
+    <label>Tags:</label><br>
+    <input th:field="*{tagAssister}" type="text" name="tag" placeholder="e.g. abc, pqr, xyz, jkl"
+           style="width: 300px;"/><br><br>
 
     <label>Publish Now?</label>
     <input type="checkbox" th:field="*{published}" /><br><br>
 
-    <button type="submit">Publish Post</button>
+    <div style="text-align: center;">
+        <button type="submit" style="padding: 0.5em 1em;">Publish Post</button>
+    </div>
 </form>
+
 </body>
 </html>

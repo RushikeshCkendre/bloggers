@@ -10,6 +10,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -38,12 +39,16 @@ public interface PostRepository extends JpaRepository<Post, Long> {
             "LOWER(t.name) LIKE LOWER(CONCAT('%', :keyword, '%'))" +
             ") " +
             "AND (:tags IS NULL OR t.name IN :tags) " +
-            "AND (:authors IS NULL OR p.author IN :authors)")
+            "AND (:authors IS NULL OR p.author IN :authors) " +
+            "AND (:from IS NULL OR p.createdAt >= :from) " +
+            "AND (:to IS NULL OR p.createdAt <= :to)")
     Page<Post> getPostsBySearchAndOrTagsAndOrAuthors(
             Pageable pageable,
-            @RequestParam String keyword,
-            @RequestParam List<String> tags,
-            @RequestParam List<String> authors);
+            @Param("keyword") String keyword,
+            @Param("tags") List<String> tags,
+            @Param("authors") List<String> authors,
+            @Param("from") LocalDateTime from,
+            @Param("to") LocalDateTime to);
 
 
 }
