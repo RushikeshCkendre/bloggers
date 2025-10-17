@@ -8,7 +8,7 @@
 
 <div style="text-align: center; width: 320px;">
     <h2>Create Account</h2>
-    <form th:action="@{/user/add}" method="POST" th:object="${userForm}">
+    <form th:action="@{/register}" method="POST" th:object="${user}">
         <label for="username">Username</label>
         <input type="text" id="username" th:field="*{username}" placeholder="Enter your username" required
                style="display: block; width: 100%; margin: 10px 0; padding: 5px;">
@@ -28,8 +28,6 @@
         <label for="name">Full Name</label>
         <input type="text" id="name" th:field="*{name}" placeholder="Enter your full name" required
                style="display: block; width: 100%; margin: 10px 0; padding: 5px;">
-
-        <!-- Role is set from backend, no input here -->
 
         <input type="submit" value="Register"
                style="display: block; width: 100%; margin: 15px 0; padding: 10px; cursor: pointer;">

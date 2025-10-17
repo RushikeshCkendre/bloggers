@@ -13,7 +13,9 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.NoOpPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
@@ -29,24 +31,40 @@ public class SecurityConfig {
         http.csrf(customizer -> customizer.disable());
         http.authorizeHttpRequests(auth -> auth
                 .requestMatchers(HttpMethod.GET, "/posts", "/posts/filter", "/posts/{id:\\d+}").permitAll()
-                .requestMatchers(HttpMethod.GET,"/posts/new", "/posts/save").hasAnyRole("AUTHOR", "ADMIN")
-                .requestMatchers(HttpMethod.POST, "/posts/update/**", "/posts/delete/**").hasAnyRole("AUTHOR","ADMIN")
+                .requestMatchers(HttpMethod.GET, "/posts/new", "/posts/save").hasAnyRole("AUTHOR", "ADMIN")
+                .requestMatchers(HttpMethod.POST, "/posts/update/**", "/posts/delete/**").hasAnyRole("AUTHOR", "ADMIN")
                 .requestMatchers(HttpMethod.POST, "/comments/add/**").permitAll()
+                .requestMatchers("/register").permitAll()
                 .anyRequest().authenticated());
         http.formLogin(form ->
                 form
                         .loginPage("/login")
                         .loginProcessingUrl("/authenticateTheUser")
+                        .defaultSuccessUrl("/posts", true)
                         .permitAll());
+        http.logout(logout ->
+                logout
+                        .logoutUrl("/logout")
+                        .logoutSuccessUrl("/post")
+                        .invalidateHttpSession(true)
+                        .clearAuthentication(true)
+                        .deleteCookies("JSESSIONID")
+                        .permitAll()
+        );
 
         return http.build();
+    }
+
+    @Bean
+    public PasswordEncoder passwordEncoder(){
+        return new BCryptPasswordEncoder();
     }
 
     @Bean
     AuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider daoAuthenticationProvider = new DaoAuthenticationProvider();
         daoAuthenticationProvider.setUserDetailsService(userDetailsService);
-        daoAuthenticationProvider.setPasswordEncoder(NoOpPasswordEncoder.getInstance());
+        daoAuthenticationProvider.setPasswordEncoder(passwordEncoder());
 
         return daoAuthenticationProvider;
     }

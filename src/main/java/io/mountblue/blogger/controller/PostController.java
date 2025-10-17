@@ -1,7 +1,6 @@
 package io.mountblue.blogger.controller;
 
 import io.mountblue.blogger.dto.PostDTO;
-import io.mountblue.blogger.enums.Role;
 import io.mountblue.blogger.mapper.PostMapper;
 import io.mountblue.blogger.model.Comment;
 import io.mountblue.blogger.model.Post;
@@ -54,6 +53,7 @@ public class PostController {
         List<Tag> tagList = tagService.getAllTags();
 
         Set<String> authorList = postService.getAllPosts().stream().map(Post::getAuthor).collect(Collectors.toSet());
+        System.out.println(authorList);
         model.addAttribute("alltags", tagList);
         model.addAttribute("allauthors", authorList);
         model.addAttribute("allposts", postsDTOPage);
@@ -88,8 +88,23 @@ public class PostController {
     }
 
     @GetMapping("/new")
-    public String showNewPostForm(Model model) {
+    public String showNewPostForm(Model model, Authentication authentication) {
         Post post = new Post();
+        String username = authentication.getName();
+        boolean isAuthor = authentication.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_AUTHOR"));
+
+        boolean isAdmin = authentication.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+
+        if(isAuthor){
+            post.setAuthor(username);
+        }
+        model.addAttribute("post", post);
+        model.addAttribute("isAuthor", isAuthor);
+        model.addAttribute("isAdmin", isAdmin);
+
+
         model.addAttribute("post", post);
 
         return "new-post";
@@ -98,20 +113,21 @@ public class PostController {
     @PostMapping("/save")
     public String savePost(@ModelAttribute Post post, Authentication authentication) {
         String username = authentication.getName();
+
         boolean isAuthor = authentication.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("ROLE_AUTHOR"));
         boolean isAdmin = authentication.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
         if (isAuthor) {
             post.setAuthor(username);
-            post.setUser(userRepository.getByUsername(username));
+            post.setUser(userRepository.findByName(username));
         }
 
 
         if (isAdmin) {
-            String givenAuthorName = post.getAuthor(); // from form
+            String givenAuthorName = post.getAuthor();
             if (givenAuthorName != null && !givenAuthorName.isBlank()) {
-                User authorUser = userRepository.getByUsername(givenAuthorName);
+                User authorUser = userRepository.findByUsername(givenAuthorName);
 
                 if (authorUser != null && authorUser.getRole().name().equals("AUTHOR")) {
                     post.setUser(authorUser);

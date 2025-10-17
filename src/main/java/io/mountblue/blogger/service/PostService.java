@@ -44,6 +44,8 @@ public class PostService {
     }
 
     public void savePost(Post post) {
+
+        System.out.println(post.getUser());
         post.setExcerpt(setNewExcerpts(post.getContent()));
         post.setTags(tagService.getTagSet(post.getTagAssister()));
 
