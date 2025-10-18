@@ -5,11 +5,13 @@
     <title>Posts</title>
 </head>
 <body style="text-align: center; font-family: sans-serif;">
+<div th:if="${authentication} != null">
 <a th:href="@{/logout}" class="btn btn-primary"
    style="text-align: right;margin-bottom: 1em; display: inline-block; padding: 0.5em 1em; border: 1px solid black;">
    logout
 </a>
-<h1>Blog App</h1>
+</div>
+<h1>Blogger</h1>
 
 <form th:action="@{/posts/filter}" method="get" style="margin-bottom: 2em; display: inline-block; text-align: left;">
     <div style="text-align: center;">
