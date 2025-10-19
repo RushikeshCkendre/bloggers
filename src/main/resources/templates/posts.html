@@ -11,6 +11,12 @@
    logout
 </a>
 </div>
+
+<div th:if="${authentication} == null">
+<a th:href="@{/login}">
+    login
+</a>
+</div>
 <h1>Blogger</h1>
 
 <form th:action="@{/posts/filter}" method="get" style="margin-bottom: 2em; display: inline-block; text-align: left;">
