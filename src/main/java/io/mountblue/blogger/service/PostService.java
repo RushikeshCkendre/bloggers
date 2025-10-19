@@ -165,7 +165,7 @@ public class PostService {
 
         if (isAuthor(authentication)) {
             post.setAuthor(username);
-            post.setUser(userRepository.findByUsername(username));
+            post.setUser(userRepository.findByName(username));
         }
 
         return post;
@@ -192,10 +192,10 @@ public class PostService {
     }
 
     private void assignAuthorToPost(Post post, Authentication authentication) {
-        String username = authentication.getName();  // This is the logged-in user's username
+        String username = authentication.getName();
 
         if (isAuthor(authentication)) {
-            User currentUser = userRepository.findByUsername(username);
+            User currentUser = userRepository.findByName(username);
             post.setAuthor(currentUser.getName());
             post.setUser(currentUser);
         } else if (isAdmin(authentication)) {
